@@ -57,40 +57,31 @@ void convolution_optimized(
     int width,
     const float *kernel)
 {
-    // Uses tiling to improve performance
+    // Zero output first
     for (int y = 0; y < height; y++)
         for (int x = 0; x < width; x++)
             out[y * width + x] = 0.0f;
 
+    // valid convolution region
     int out_h = height - FILTER_DIM + 1;
     int out_w = width - FILTER_DIM + 1;
 
-    const int BLOCK_SIZE = 64;
-    const int BLOCKS = width / BLOCK_SIZE;
-
-    for (int yy = 0; yy < out_h; yy += BLOCK_SIZE) {
-        for (int xx = 0; xx < out_w; xx += BLOCK_SIZE) {
-
-            int y_max = MIN(BLOCK_SIZE, out_h - yy);
-            int x_max = MIN(BLOCK_SIZE, out_w - xx);
-
-            for (int y = 0; y < y_max; y++) {
-                for (int x = 0; x < x_max; x++) {
-                    float acc = 0.0f;
-
-                    for (int ky = 0; ky < FILTER_DIM; ky++) {
-                        for (int kx = 0; kx < FILTER_DIM; kx++) {
-                            acc += img[(yy + y + ky) * width + (xx + x + kx)] * kernel[ky * FILTER_DIM + kx];
-                        }
-                    }
-                    out[(yy + y) * width + xx + x] = acc;
-
+    for (int y = 0; y < out_h; y++)
+    {
+        for (int ky = 0; ky < FILTER_DIM; ky++)
+        {
+            //float acc = 0.0f;
+            for (int x = 0; x < out_w; x++)
+            {
+                float acc = 0.0f;
+                for (int kx = 0; kx < FILTER_DIM; kx++)
+                {
+                    acc += img[(y + ky) * width + (x + kx)] * kernel[ky * FILTER_DIM + kx];
                 }
+                out[y * width + x] += acc;
             }
         }
     }
-
-    // valid convolution region
 }
 
 int main(int argc, char **argv)
